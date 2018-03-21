@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Document</title>
+</head>
+<body>
+  
+</body>
+<script>
+
+ const map = [
+  ['O'],
+  ['A','O'],
+  ['B','O'],
+  ['C','O'],
+  ['K1','A','B'],
+  ['K2','A','C'],
+  ['Z','K1','K2'],
+ ];
+
+ function c3 (map) {
+   const dictionary = {};
+   
+   map.forEach(item=>{
+    let array = [...item];
+    let head = array[0];
+    dictionary[head] = l(item);
+   });
+
+   function l(array){
+    let _array = [...array];
+    const head = _array[0];
+    if (dictionary[head] !== undefined) return dictionary[head];
+    if (_array.length === 1) return _array;
+    const one = _array.shift();
+    return [one,...marge([..._array.map(item=>l([item])),_array])];
+
+   }
+
+   function marge(array){
+      const a = [];
+      loop(array);
+      function loop(_array){
+        let [best,next] = findBest(_array);
+        a.push(best);
+        if (next.length === 0) return;
+        return loop(next);
+      }
+      
+      return a;
+   }
+
+   function findBest(array){
+    const d = {}
+    let next = [];
+    array.forEach((item)=>{
+      item.forEach((it,index)=>{
+        if (d[it] === undefined) {
+          d[it] = index;
+        } else {
+          d[it] += index;
+        }
+      });
+    });
+    let best = null;
+    let num = null;
+    for (let key in d){
+      if (best === null) {
+        best = key;
+        num = d[key]
+      } else if (d[key] < num) {
+        best = key;
+        num = d[key];
+      }
+    }
+    next = array.reduce((pre,cur)=>{
+      let item = [...cur];
+      if (item[0] === best) {
+        item.shift();
+      } 
+      if (item.length > 0) return [...pre,item];
+      return [...pre];
+    },[]);
+    return [best,next];
+   }
+
+    return dictionary;
+
+ }
+ const c3l = c3(map)
+ console.log(c3l);
+
+ document.body.innerHTML = JSON.stringify(c3l);
+</script>
+</html>
