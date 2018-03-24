@@ -14,24 +14,23 @@ contract Payroll is Ownable {
         address addressId;
         uint salary;
         uint lastPayday;
-        uint id;
     }
     
-    mapping(uint => Employee) public employees; 
+    mapping(address => Employee) public employees; 
     
-    function updateEmployeeSalary(uint id, uint salary) onlyOwner employeeNotExits(id) {
-        var employee = employees[id];
+    function updateEmployeeSalary(address aid, uint salary) onlyOwner employeeNotExits(aid) {
+        var employee = employees[aid];
         _partialPaid(employee);
-        totleSalary = totleSalary.sub(employees[id].salary);
-        employees[id].salary = salary.mul(1 ether);
-        totleSalary = totleSalary.add(employees[id].salary);
-        employees[id].lastPayday = now;
+        totleSalary = totleSalary.sub(employees[aid].salary);
+        employees[aid].salary = salary.mul(1 ether);
+        totleSalary = totleSalary.add(employees[aid].salary);
+        employees[aid].lastPayday = now;
     }
     
-    function addEmployee(address aid,uint salary,uint id) onlyOwner employeeExits(id){
-        var employee = employees[id];
+    function addEmployee(address aid,uint salary) onlyOwner employeeExits(aid){
+        var employee = employees[aid];
         uint newSalary = salary.mul(1 ether) ;
-        employees[id] = Employee(aid,newSalary,now,id);
+        employees[aid] = Employee(aid,newSalary,now);
         totleSalary = totleSalary.add(newSalary);
     }
 
@@ -42,11 +41,11 @@ contract Payroll is Ownable {
         employee.addressId.transfer(payment);
     }
     
-    function removeEmployee(uint id) onlyOwner employeeNotExits(id){
-        var employee = employees[id];
+    function removeEmployee(address aid) onlyOwner employeeNotExits(aid){
+        var employee = employees[aid];
         _partialPaid(employee);
-        totleSalary = totleSalary.sub(employees[id].salary);
-        delete employees[id];
+        totleSalary = totleSalary.sub(employees[aid].salary);
+        delete employees[aid];
     }
     
     
@@ -63,31 +62,30 @@ contract Payroll is Ownable {
         return calculateRunway() > 0;
     }
     
-    modifier employeeExits(uint id) {
-        var employee = employees[id];
+    modifier employeeExits(address aid) {
+        var employee = employees[aid];
         assert(employee.addressId == 0x0);
         _;
     }
     
-    modifier employeeNotExits(uint id) {
-        var employee = employees[id];
+    modifier employeeNotExits(address aid) {
+        var employee = employees[aid];
         assert(employee.addressId != 0x0);
         _;
     }
     
-    function changePaymentAddress(uint id,address aid) employeeNotExits(id){
-        var employee = employees[id];
-        _partialPaid(employee);
-        employee.addressId = aid;
-    }
+    function changePaymentAddress(address oldId, address newId) onlyOwner employeeExits(oldId) employeeNotExits(newId) {
+        var employee = employees[oldId];
+        employees[newId] = Employee(newId, employee.salary, employee.lastPayday);
+        delete employees[oldId];
+}
     
-    function getPaid(uint id) employeeNotExits(id){
-        var employee = employees[id];
+    function getPaid(address aid) employeeNotExits(aid){
+        var employee = employees[aid];
         assert(employee.addressId == msg.sender);
         uint nextPayday = employee.lastPayday.add(payDuration);
         assert(nextPayday < now);
         employee.lastPayday = nextPayday;
         employee.addressId.transfer(employee.salary);
-        
     }
 }
